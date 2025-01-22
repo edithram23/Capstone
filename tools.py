@@ -3,13 +3,15 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import pandas as pd
 import io
+import subprocess
+import time
 
 
 class Reader_Tool(BaseTool):
     def Input_param():
         class MyToolInput(BaseModel):
             """Input scheme - file_path"""
-            file_path: str = Field(...,description='singel file_path of the excel/csv file')
+            file_path: str = Field(...,description='single file_path of the excel/csv file')
         return MyToolInput
 
     name:str = "DatasetReader"
@@ -43,13 +45,54 @@ class Reader_Tool(BaseTool):
         
         # file_path = file_path[0]
         print(file_path)
-        df = pd.read_excel(file_path)
-        return f"""After reading the file {file_path}:\n \
-            {get_describe(file_path=file_path,dataframe=df)} \
-            {get_info(file_path=file_path,dataframe=df)} \
-            {get_null(file_path=file_path,dataframe=df)}\
-            {get_head(file_path=file_path,dataframe=df)}
-            """
+        try:
+                
+            try:    
+                df = pd.read_excel(file_path)
+                return f"""After reading the file {file_path}:\n \
+                    {get_describe(file_path=file_path,dataframe=df)} \
+                    {get_info(file_path=file_path,dataframe=df)} \
+                    {get_null(file_path=file_path,dataframe=df)}\
+                    {get_head(file_path=file_path,dataframe=df)}
+                    """
+            except Exception as e:
+                df = pd.read_csv(file_path)
+                return f"""After reading the file {file_path}:\n \
+                    {get_describe(file_path=file_path,dataframe=df)} \
+                    {get_info(file_path=file_path,dataframe=df)} \
+                    {get_null(file_path=file_path,dataframe=df)}\
+                    {get_head(file_path=file_path,dataframe=df)}
+                    """
+        except Exception as e:
+            return f"""Error: Could not read the dataframe {str(e)}"""
+    
+    
+class Code_Runner(BaseTool):
+    def Input_param():
+        class MyToolInput(BaseModel):
+            """Input scheme - code"""
+            code: str = Field(...,description='Code that needs to be executed.')
+            code_description: str = Field(...,description='Description of the task for which code that needs to be executed [max 2 words : format separated by "_" underscores ]')
+        return MyToolInput
 
-    
-    
+    name:str = "Code_Runner"
+    description:str = "Executes a code and provides the output of the code. If encountered an error - returns error."
+    args_schema: Type[BaseModel] = Input_param()
+    def _run(self, code:str,code_description:str) -> str :
+        try:
+            file_name = ('_'.join(code_description.split(' ')))+'.py'
+            print(code)
+            with open(file_name, "w") as script_file:
+                    script_file.write(code)
+            result = subprocess.run(
+                ["python", file_name],
+                capture_output=True,
+                text=True,
+                check=True  # Raises an exception if the script returns a non-zero exit code
+            )
+            time.sleep(10)
+            return f"Execution Result {result.stdout}"
+        except subprocess.CalledProcessError as e:
+            return f"Error while executing the script {e.stderr}"
+        except Exception as e:
+            return f"Error : {str(e)}"

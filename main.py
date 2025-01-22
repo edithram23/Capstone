@@ -1,8 +1,9 @@
 from crewai import Agent, Task, Crew, LLM
 from dotenv import load_dotenv
 import os
-from tools import Reader_Tool
+from tools import Reader_Tool,Code_Runner
 import litellm
+
 
 os.environ['LITELLM_LOG'] = 'DEBUG'
 
@@ -11,7 +12,8 @@ load_dotenv('.env')
 llm = LLM(model='groq/llama-3.1-8b-instant',
           temperature=0.1,api_key=os.getenv('GROQ_API_KEY'))
 
-code_llm = llm = LLM(model='ollama/phi4',base_url="https://08f7-34-132-156-181.ngrok-free.app")
+code_llm = llm 
+# = LLM(model='ollama/phi4',base_url="https://08f7-34-132-156-181.ngrok-free.app")
 
 # Agents 
 """Preprocessing AGENTS"""
@@ -31,9 +33,11 @@ preprocess_code_agent = Agent(
             goal='Generate data preprocessing code based on analysis and save the results in a new csv/excel file.',
             backstory="""Expert Python programmer specialized in data preprocessing 
                         and pandas operations.
-                        With the each files information and necessary required preprocessing, execute code properly """,
+                        With the each files information and necessary required preprocessing, execute code properly.
+                        Make sure you give the actual file path of the data to generate the code.""",
             verbose=True,
-            llm=code_llm,allow_code_execution=True,
+            llm=code_llm,
+            tools=[Code_Runner()],
             format_input=lambda task: {
                 "messages": [
                     {"role": "system", "content": "You are an expert Python programmer."},
@@ -44,12 +48,14 @@ preprocess_code_agent = Agent(
 
 """TASKS"""
 reader_task = Task(
+    name="Data Reader",
     description="Analyze the uploaded data files: ```{file_path}```. Process each file **individually using the tool**.",
     agent=preprocess_agent,
     expected_output="The analysis results of the data file, including null values, description, and data structure.",
 )
 
 preprocessing_code_task = Task(
+    name="Preprocessing code writter",
     description="""Based on the data analysis provided, generate Python code that:
     1. Reads the original dataset
     2. Implements appropriate preprocessing steps (handling missing values, data types, etc.)
@@ -63,7 +69,8 @@ preprocessing_code_task = Task(
 master_crew = Crew(llm=llm,
                    agents=[preprocess_agent,preprocess_code_agent],
                    tasks=[reader_task,preprocessing_code_task],
-                   verbose=True)
+                   verbose=True,
+                   output_log_file="logs.txt")
 
-results = master_crew.kickoff(inputs={"file_path":["dummy.xlsx","yennamo_yedho.xlsx"]})
+results = master_crew.kickoff(inputs={"file_path":["titanic.csv"]})
 print(results)
