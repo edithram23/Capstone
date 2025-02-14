@@ -71,19 +71,20 @@ class Code_Runner(BaseTool):
     def Input_param():
         class MyToolInput(BaseModel):
             """Input scheme - code"""
-            code: str = Field(...,description='Code that needs to be executed.')
-            code_description: str = Field(...,description='Description of the task for which code that needs to be executed [max 2 words : format separated by "_" underscores ]')
+            code: str = Field(...,description='Provide the code that needs to be executed as a string')
+            # code_description: str = Field(...,description='Description of the task for which code that needs to be executed [max 2 words : format separated by "_" underscores ]')
         return MyToolInput
 
-    name:str = "Code_Runner"
-    description:str = "Executes a code and provides the output of the code. If encountered an error - returns error."
+    name:str = "Code_Executor"
+    description:str = "Accepts the code as a string in the key 'code', executes the code and provides the output. If encountered an error - returns error."
     args_schema: Type[BaseModel] = Input_param()
-    def _run(self, code:str,code_description:str) -> str :
+    def _run(self, code:str) -> str :
         try:
-            file_name = ('_'.join(code_description.split(' ')))+'.py'
+            file_name = 'preprocessing.py'
+            print(file_name)
             print(code)
             with open(file_name, "w") as script_file:
-                    script_file.write(code)
+                    script_file.write(str(code))
             result = subprocess.run(
                 ["python", file_name],
                 capture_output=True,
@@ -95,4 +96,28 @@ class Code_Runner(BaseTool):
         except subprocess.CalledProcessError as e:
             return f"Error while executing the script {e.stderr}"
         except Exception as e:
+            return f"Error : {str(e)}"
+        
+def code_executor(code):
+        # print("called")
+        try:
+            code = str(code)
+            file_name = 'preprocessing.py'
+            code_file = code.split('```python')[1].split('```')[0]
+            # print(code_file)
+            with open(file_name, "wb") as script_file:
+                    script_file.write(str(code_file).encode('utf-8'))
+            result = subprocess.run(
+                ["python", file_name],
+                capture_output=True,
+                text=True,
+                check=True  # Raises an exception if the script returns a non-zero exit code
+            )
+            time.sleep(10)
+            return f"Execution Result {result.stdout}"
+        except subprocess.CalledProcessError as e:
+            print(e)
+            return f"Error while executing the script {e.stderr}"
+        except Exception as e:
+            print(e)
             return f"Error : {str(e)}"
