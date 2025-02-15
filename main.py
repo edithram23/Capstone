@@ -52,6 +52,7 @@ preprocess_code_agent = Agent(
             llm=code_llm
         )
 
+"""Plot suggestor - Insight Agent"""
 plot_suggestor = Agent(
     role='Read the updated dataset - analyse the data and then provide plot suggestions,possible relationship between datas or columns.',
     goal="To provide meaningful insights about the dataset, relationship between different columns, what type of plots can be generated to understand the underlying information of the data.",
@@ -67,6 +68,21 @@ plot_suggestor = Agent(
     tools=[Reader_Tool()]
 )
 
+"""Plot generator/ Dashboard generator Agent"""
+plot_generator = Agent(
+    role='Plot Generator / Dashboard Creator',
+    goal="Generate Python code that creates visualizations (charts/dashboards) based on insights and human-specified suggestions, and save all charts locally.",
+    backstory="""You are an expert Python developer with a deep knowledge of data visualization using matplotlib and Plotly.
+                Your job is to:
+                - Read the insights provided by the Plot Suggestor Agent.
+                - Generate Python code to create the required visualizations (scatter plots, histograms, box plots, or interactive dashboards).
+                - Ensure the code saves all the generated charts or dashboards locally (as image files for matplotlib or HTML files for Plotly).
+                - Include error handling and clear inline comments for clarity.
+                """,
+    verbose=True,
+    llm=code_llm,
+    tools=[Reader_Tool()]
+)
 
 """TASKS"""
 reader_task = Task(
@@ -99,13 +115,29 @@ plot_suggestor_task = Task(
      name="Plot Suggestion Task",
     description="Read the updated dataset ```updated_{file_path}```, analyze the data to identify relationships between columns, and suggest appropriate plot types (e.g., scatter, histogram, box) for visualization.",
     agent=plot_suggestor,
-    expected_output="A detailed insights of the dataset. - [Plotname]: [columns to be used with proper axis]-[Why and what might be understand from this plot etc]"
+    # human_input=True,
+    expected_output="A detailed insights of the dataset. -[S.NO] [Plotname]: [columns to be used with proper axis(x,y,z... based on the plot)]-[Why and what might be understand from this plot etc]"
+)
+
+plot_generator_task = Task(
+    name="Plot Generator Task",
+    description="""Using the preprocessed dataset ```updated_{file_path}``` and insights from the Plot Suggestor Task (which may include human input on required charts), generate Python code that:
+    1. Creates the suggested visualizations using libraries such as matplotlib or Plotly.
+    2. Saves all generated charts locally (e.g., image files for matplotlib plots, HTML files for Plotly dashboards).
+    3. Includes appropriate error handling and documentation within the code.
+    
+    **Note:** If specific human input is provided for chart types or design, integrate those instructions into the visualization code.
+    """,
+    agent=plot_generator,
+    context=[plot_suggestor_task],
+    callback=code_executor,
+    expected_output="Well-documented Python code that generates and saves the required visualizations based on the provided insights."
 )
 
 master_crew = Crew(
     llm=llm,
-    agents=[preprocess_agent, preprocess_code_agent,plot_suggestor],
-    tasks=[reader_task, preprocessing_code_task,plot_suggestor_task],
+    agents=[preprocess_agent, preprocess_code_agent,plot_suggestor,plot_generator],
+    tasks=[reader_task, preprocessing_code_task,plot_suggestor_task,plot_generator_task],
     verbose=True,
     output_log_file="logs.txt"
 )

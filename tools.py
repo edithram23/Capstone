@@ -116,8 +116,8 @@ def code_executor(code):
             time.sleep(10)
             return f"Execution Result {result.stdout}"
         except subprocess.CalledProcessError as e:
-            print(e)
-            return f"Error while executing the script {e.stderr}"
+                print("Subprocess error:", e.stderr)
+                return f"Error while executing the script: {e.stderr}"
         except Exception as e:
             print(e)
             return f"Error : {str(e)}"
