@@ -1,8 +1,10 @@
 from crewai import Agent, Task, Crew, LLM
 from dotenv import load_dotenv
 import os
-from tools import Reader_Tool, Code_Runner, code_executor
+from tools import Reader_Tool, Code_Runner, code_executor, knowledge_base
 import litellm
+from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
+
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -21,6 +23,10 @@ code_llm = llm
 # = LLM(model='ollama/phi4',base_url="https://08f7-34-132-156-181.ngrok-free.app")
 
 
+
+# Knowledge base
+# kb = TextFileKnowledgeSource(file_paths=knowledge_base())
+
 # Agents 
 """Preprocessing AGENTS"""
 preprocess_agent = Agent(
@@ -35,27 +41,35 @@ preprocess_agent = Agent(
         )
 
 preprocess_code_agent = Agent(
-            role='Code Writer & Executor',
+            role='Code Writer and Executor',
             goal="Generate python code and execute the generated code using the tool.",
-            backstory="""Expert Python programmer specialized in Machine Learning, data preprocessing, 
-                        and pandas operations. 
-                        Guideline for different datatypes:
-                        Datatype: Numeric
-                            - To handle null values: Take mean
-                            - To handle outlier: Perform IQR
-                            - Perform binning if numeric data is continuous
+            backstory="""As a expert Python programmer specialized in Machine Learning, data preprocessing, and pandas operations.
+You are tasked to write a python code which will read a csv/excel file and then perform necessary preprocessing operations like handling null values, etc.
 
-                        Datatype: Categorical 
-                            To handle null values: Take mode[0]
-                        """,
+#Guideline for different datatypes:
+- Datatype: Numeric
+    -- To handle null values: Take mean
+    -- To handle outlier: Perform IQR
+    -- Perform binning if numeric data is continuous
+
+- Datatype: Categorical 
+    -- To handle null values: Take mode[0]""",
             verbose=True,
-            llm=code_llm
+            llm=code_llm,
+            knowledge_sources=[TextFileKnowledgeSource(file_paths=['Data preprocessing Knowledge Base.txt'],collection_name='Capstone')],
+            embedder_config={
+                "provider": "google",
+                "config": {
+                    "model": "models/text-embedding-004",
+                    "api_key": os.getenv('GEMINI_API_KEY'),
+                }
+            }
         )
 
 """Plot suggestor - Insight Agent"""
 plot_suggestor = Agent(
-    role='Read the updated dataset - analyse the data and then provide plot suggestions,possible relationship between datas or columns.',
-    goal="To provide meaningful insights about the dataset, relationship between different columns, what type of plots can be generated to understand the underlying information of the data.",
+    role='Plot Suggestor and Insights generator',
+    goal="- Read the updated dataset analyse the data and then provide plot suggestions,possible relationship between datas or columns.\n -To provide meaningful insights about the dataset, relationship between different columns, what type of plots can be generated to understand the underlying information of the data.",
     backstory="""As the greatest Data Analyst cum Scientist in the history of mankind, you are tasked with a simple problem:
                 - Read the preprocessed dataset.
                 - Analyze the dataset and find patterns across the columns.
@@ -65,7 +79,16 @@ plot_suggestor = Agent(
                 """,
     verbose=True,
     llm=code_llm,
-    tools=[Reader_Tool()]
+    tools=[Reader_Tool()],
+    knowledge_sources=[TextFileKnowledgeSource(file_paths=['Plot Suggestion Knowledge Base.txt'],collection_name='Capstone')],
+    embedder_config={
+        "provider": "google",
+        "config": {
+            "model": "models/text-embedding-004",
+            "api_key": os.getenv('GEMINI_API_KEY'),
+        }
+    }
+
 )
 
 """Plot generator/ Dashboard generator Agent"""
@@ -108,12 +131,12 @@ preprocessing_code_task = Task(
     agent=preprocess_code_agent,
     context=[reader_task],
     callback=code_executor,
-    expected_output="A well structured and a fully working Python preprocessing code"
+    expected_output="A well structured and a fully working Python preprocessing code. Code should be enclosed with ```python ```"
 )
 
 plot_suggestor_task = Task(
      name="Plot Suggestion Task",
-    description="Read the updated dataset ```updated_{file_path}```, analyze the data to identify relationships between columns, and suggest appropriate plot types (e.g., scatter, histogram, box) for visualization.",
+    description="Read the updated dataset, analyze the data to identify relationships between columns, and suggest appropriate plot types (e.g., scatter, histogram, box) for visualization.",
     agent=plot_suggestor,
     # human_input=True,
     expected_output="A detailed insights of the dataset. -[S.NO] [Plotname]: [columns to be used with proper axis(x,y,z... based on the plot)]-[Why and what might be understand from this plot etc]"
@@ -121,7 +144,7 @@ plot_suggestor_task = Task(
 
 plot_generator_task = Task(
     name="Plot Generator Task",
-    description="""Using the preprocessed dataset ```updated_{file_path}``` and insights from the Plot Suggestor Task (which may include human input on required charts), generate Python code that:
+    description="""Using the preprocessed dataset and insights from the Plot Suggestor Task (which may include human input on required charts), generate Python code that:
     1. Creates the suggested visualizations using libraries such as matplotlib or Plotly.
     2. Saves all generated charts locally (e.g., image files for matplotlib plots, HTML files for Plotly dashboards).
     3. Includes appropriate error handling and documentation within the code.
@@ -131,7 +154,7 @@ plot_generator_task = Task(
     agent=plot_generator,
     context=[plot_suggestor_task],
     callback=code_executor,
-    expected_output="Well-documented Python code that generates and saves the required visualizations based on the provided insights."
+    expected_output="""Well-documented Python code that reades the updated - preprocessed dataset and generates - saves the required visualizations based on the provided insights. Code should be enclosed with ```python ```"""
 )
 
 master_crew = Crew(
@@ -142,5 +165,5 @@ master_crew = Crew(
     output_log_file="logs.txt"
 )
 
-results = master_crew.kickoff(inputs={"file_path": ["titanic.csv"]})
+results = master_crew.kickoff(inputs={"file_path": ["House_Price_India.csv"]})
 print(results)

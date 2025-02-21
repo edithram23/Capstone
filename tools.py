@@ -5,7 +5,15 @@ import pandas as pd
 import io
 import subprocess
 import time
+import sys
+import logging
+import glob
 
+logging.basicConfig(level=logging.INFO,filename='logs_logger.txt')
+
+def knowledge_base():
+    files = glob.glob('knowledge_base\\*')
+    return files
 
 class Reader_Tool(BaseTool):
     def Input_param():
@@ -83,15 +91,15 @@ class Code_Runner(BaseTool):
             file_name = 'preprocessing.py'
             print(file_name)
             print(code)
-            with open(file_name, "w") as script_file:
-                    script_file.write(str(code))
+            with open(file_name, "wb") as script_file:
+                    script_file.write(str(code).encode('utf-8'))
             result = subprocess.run(
-                ["python", file_name],
+                [sys.executable, file_name],
                 capture_output=True,
                 text=True,
-                check=True  # Raises an exception if the script returns a non-zero exit code
+                check=True,timeout=30  # Raises an exception if the script returns a non-zero exit code
             )
-            time.sleep(10)
+            logging.info("Script Output:\n%s", result.stdout)
             return f"Execution Result {result.stdout}"
         except subprocess.CalledProcessError as e:
             return f"Error while executing the script {e.stderr}"
@@ -99,22 +107,51 @@ class Code_Runner(BaseTool):
             return f"Error : {str(e)}"
         
 def code_executor(code):
-        # print("called")
+        def beautify_code(file_path):
+            """Formats the Python file using black."""
+            try:
+                subprocess.run(["black", file_path], check=True)
+                print(f"✅ Code formatted successfully: {file_path}")
+            # except subprocess.CalledProcessError:
+            #     print(f"❌ Failed to format {file_path}. Ensure 'black' is installed.")
+            except Exception as e:
+                print(f"❌ Error: {e}")
+
+        def lint_code(file_path):
+            """Runs pylint to check for errors in the Python file."""
+            try:
+                lint_result = subprocess.run(["pylint", file_path], capture_output=True, text=True)
+                print(f"🔍 Pylint Output:\n{lint_result.stdout}")
+            except Exception as e:
+                print(f"❌ Error running pylint: {e}")
+        
         try:
             code = str(code)
             file_name = 'preprocessing.py'
             code_file = code.split('```python')[1].split('```')[0]
             # print(code_file)
-            with open(file_name, "wb") as script_file:
-                    script_file.write(str(code_file).encode('utf-8'))
+            code_block = code_file.encode('utf-8-sig').decode('utf-8-sig')
+
+            code_lines = code_block.splitlines()
+            cleaned_code = '\n'.join(line.rstrip() for line in code_lines)
+
+            with open(file_name, "w", encoding='utf-8') as script_file:
+                script_file.write(cleaned_code)
+        
+            print("\n🔹 Beautifying the code...\n")
+            beautify_code(file_name)
+
+            print("\n🔹 Running code analysis...\n")
+            lint_code(file_name)
+            
             result = subprocess.run(
-                ["python", file_name],
+                [sys.executable, file_name],
                 capture_output=True,
                 text=True,
                 check=True  # Raises an exception if the script returns a non-zero exit code
             )
             time.sleep(10)
-            return f"Execution Result {result.stdout}"
+            print(f"Execution Result {result.stdout}")
         except subprocess.CalledProcessError as e:
                 print("Subprocess error:", e.stderr)
                 return f"Error while executing the script: {e.stderr}"
