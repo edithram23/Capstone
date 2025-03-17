@@ -1,0 +1,9 @@
+When handling data files, follow these preprocessing steps based on data types:
+
+Datatype: Numeric  
+  - Handling Null Values: Perform mean imputation by replacing null values with the mean of the column.  
+  - Outlier Detection: Apply IQR-based outlier detection only on meaningful numeric columns such as continuous numerical features (e.g., Age, Salary). Do not apply outlier detection to unique identifiers (e.g., Roll Number, Transaction ID) or categorical data encoded as numbers (e.g., Gender: 0, 1). Rows containing outliers should be removed during preprocessing.
+  - Binning: For continuous numeric data, perform binning by converting values into categorical labels (e.g., Age 0-18 as 'Child', 19-60 as 'Adult', 60+ as 'Senior').
+
+Datatype: Categorical 
+  - Handling Null Values: Perform mode imputation by replacing null values with the most frequent category in the column.

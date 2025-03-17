@@ -1,0 +1,46 @@
+When recommending plots based on dataset relationships, consider the following plot types along with their detailed descriptions and general examples:
+
+- Bar Plot: Compares counts or proportions across categories. Useful for visualizing the distribution of categorical data and highlighting differences between groups.  
+  Example: Display sales counts for different product categories.
+
+- Histogram: Displays the distribution of a single numeric variable by dividing data into bins. Helps identify patterns such as skewness, peaks, and gaps in the data.  
+  Example: Plot the distribution of customer ages in a dataset.
+
+- Box Plot: Summarizes the distribution of numeric data through quartiles and highlights outliers. Ideal for comparing distributions across different categories.  
+  Example: Compare monthly incomes across different job roles.
+
+- Scatter Plot: Plots two numeric variables against each other to show relationships, patterns, or clusters. Useful for identifying trends, correlations, and potential anomalies.  
+  Example: Visualize the relationship between advertising spend and sales revenue.
+
+- Heatmap (Correlation Matrix): Represents pairwise correlations between numeric variables using color intensity. Helps reveal strong relationships and dependencies between features.  
+  Example: Show correlations between various financial indicators in a dataset.
+
+- Count Plot: Displays the frequency of each category within a categorical variable. Useful for understanding the balance or imbalance in the dataset.  
+  Example: Display the count of employees across different departments.
+
+- Line Plot: Shows data points connected by lines to illustrate trends over time or ordered data. Ideal for observing changes, trends, and patterns in sequential data.  
+  Example: Plot stock prices over time.
+
+- Pair Plot: Visualizes pairwise relationships between multiple numeric variables in one grid. Great for quickly exploring potential correlations.  
+  Example: Display relationships between age, salary, and years of experience in a dataset.
+
+- Violin Plot: Combines features of box plots and density plots to show the distribution of numeric data across categories. Useful for comparing distributions while also displaying the density and spread.  
+  Example: Show income distribution across different education levels.
+
+- Stacked Bar Plot: Represents categorical data with bars divided into sub-categories. Helps visualize the composition and proportions within categories.  
+  Example: Visualize market share by region, stacked by product type.
+
+- Swarm Plot: Displays individual data points spread out along a categorical axis to avoid overlap. Provides a detailed view of the distribution while retaining information on each data point.  
+  Example: Display sales transactions across different store locations.
+
+- Bubble Plot: Similar to a scatter plot but with an additional dimension represented by bubble size. Ideal for showing relationships between three variables at once.  
+  Example: Show population, GDP, and area size for various countries.
+
+- Donut Chart: Circular chart that displays proportions, similar to a pie chart, with a hole in the center. Enhances readability of proportions and relative sizes of categories.  
+  Example: Display the proportion of different payment methods used in transactions.
+
+- Parallel Coordinates Plot: Plots multi-dimensional data as lines intersecting multiple axes, one for each feature. Useful for visualizing and comparing patterns across many dimensions simultaneously.  
+  Example: Visualize multiple product attributes like price, weight, and rating in one plot.
+
+- Facet Grid (Small Multiples): Generates multiple small plots for different subsets of the data, arranged in a grid. Helps compare distributions, trends, or relationships across various subsets of the data.  
+  Example: Plot sales trends for different regions over time in a grid layout.
