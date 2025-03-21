@@ -6,27 +6,29 @@ import litellm
 from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 from crewai.memory import ShortTermMemory
 import glob
-
+from task_output import *
 import logging
 import sys
 
 os.environ['LITELLM_LOG'] = 'DEBUG'
 
+litellm.set_verbose = True
 
 
 
 load_dotenv('.env',override=True)
 
-llm = LLM(model='gemini/gemini-2.0-flash',api_key=os.getenv('GEMINI_API_KEY'))
+llm = LLM(model='gemini/gemini-2.0-flash-lite',api_key=os.getenv('GEMINI_API_KEY'))
 code_llm = llm 
-
+with open('knowledge\\Agent Instructions.txt','r') as f:
+    agent_instructions = f.read()
 # Agents 
 """Preprocessing AGENTS"""
 preprocess_agent = Agent(
             role='Data Reader',
             goal='Read and analyze data file structure',
             backstory="""Expert data reader specialized in understanding data structure 
-                        and providing comprehensive initial analysis.""",
+                        and providing comprehensive initial analysis.  Generate a summary or description about the dataset.""",
             tools=[Reader_Tool(),Folder_File_Getter()],  # Custom tools the agent can use
             verbose=True,  # Enable detailed logging
             llm=llm
@@ -82,6 +84,29 @@ plot_suggestor = Agent(
     }
 
 )
+"""Plot suggestor critic"""
+plot_suggestor_critic = Agent(
+    role='Plot Suggestor Critic',
+    goal="Critique the plot suggestions provided by the Plot Suggestor Agent.",
+    backstory=f"""You are an expert in data visualization and plot suggestion.
+                - Critique the plot suggestions provided by the Plot Suggestor Agent.
+                - Provide feedback on the plot suggestions.
+                - Suggest the best possible plot for the given dataset.
+                - Provide the exact column name that should be used in the axis for the plot.
+                {agent_instructions}
+                """,
+    verbose=True,
+    llm=code_llm,
+    tools=[Reader_Tool(),Folder_File_Getter()],
+    knowledge_sources=[TextFileKnowledgeSource(file_paths=['Agent knowledge base.txt'],collection_name='Capstone')],
+    embedder_config={
+        "provider": "google",
+        "config": {
+            "model": "models/text-embedding-004",
+            "api_key": os.getenv('GEMINI_API_KEY'),
+        }
+    }    
+)
 
 """Plot generator/ Dashboard generator Agent"""
 plot_generator = Agent(
@@ -129,9 +154,10 @@ def get_files_in_folder(folder_path):
 """TASKS"""
 reader_task = Task(
     name="Data Reader",
-    description="Analyze the uploaded data files in the folder: ```{folder_path}```. Process each file **individually using the tool**. Use the Folder_File_Getter tool to get the list of files in the folder. And then use the Reader_Tool to read the csv/excel files.",
+    description="Analyze the uploaded data files in the folder: ```{folder_path}```. Process each file **individually using the tool**. Use the Folder_File_Getter tool to get the list of files in the folder. And then use the Reader_Tool to read the csv/excel files. Finally  generate a summary or description about the dataset.",
     agent=preprocess_agent,
-    expected_output="The analysis results of each data file, including null values, description, and data structure.",
+    expected_output="The analysis results of each data file, including null values, description, and data structure, generate a summary or description about the dataset.",
+    output_pydantic=DataAnalysisResult
 )
 
 preprocessing_code_task = Task(
@@ -158,7 +184,18 @@ plot_suggestor_task = Task(
     description="Read the updated datasets from the folder path ```{folder_path}```,[read all the files from the folder using Folder_File_Getter and then read the updated datasets using Reader_Tool] analyze the data to identify relationships between columns, and suggest appropriate plot types (e.g., scatter, histogram, box) for visualization.",
     agent=plot_suggestor,
     # human_input=True,
-    expected_output="A detailed insights of each dataset. -[S.NO] [Plotname]: [columns to be used with proper axis(x,y,z... based on the plot)]-[Why and what might be understand from this plot etc]"
+    expected_output="A detailed insights of each dataset. -[S.NO] [Plotname]: [columns to be used with proper axis(x,y,z... based on the plot)]-[Why and what might be understand from this plot etc]",
+    output_pydantic=PlotSuggestions,
+    context=[reader_task]
+)
+
+plot_suggestor_critic_task = Task(
+    name="Plot Suggestor Critic Task",
+    description="Critique the plot suggestions provided by the Plot Suggestor Agent.",
+    agent=plot_suggestor_critic,
+    context=[plot_suggestor_task,reader_task],
+    expected_output="A detailed critique of the plot suggestions provided by the Plot Suggestor Agent.Along with the proper plot suggestions.",
+    output_pydantic=PlotSuggestionCritique
 )
 
 plot_generator_task = Task(
@@ -171,10 +208,10 @@ plot_generator_task = Task(
     **Note:** If specific human input is provided for chart types or design, integrate those instructions into the visualization code.
     """,
     agent=plot_generator,
-    context=[plot_suggestor_task],
+    context=[plot_suggestor_critic_task],
     callback=code_executor,
     expected_output="""Well-documented Python code that reads the updated - preprocessed dataset(s) and generates - saves the required visualizations based on the provided insights. Code should be enclosed with ```python ```"""
-)
+    )
 
 visualization_report_task = Task(
     name="Visualization Report Task",
@@ -183,8 +220,8 @@ visualization_report_task = Task(
     2. Provide detailed descriptions of what each visualization shows
     3. Identify key patterns, trends, and insights visible in the plots
     4. Compile all insights into a structured, well-formatted report
-    
-    The report should be clear, concise, and provide actionable insights based on the visualizations.
+    viusalizations
+    The report should be clear, concise, and provide actionable insights based on the .
     """,
     agent=visualization_report_agent,
     context=[plot_generator_task],
@@ -201,13 +238,13 @@ master_crew = Crew(
         }
     },
     llm=llm,
-    agents=[preprocess_agent, preprocess_code_agent, plot_suggestor, plot_generator, visualization_report_agent],
-    tasks=[reader_task, preprocessing_code_task, plot_suggestor_task, plot_generator_task, visualization_report_task],
+    agents=[preprocess_agent, preprocess_code_agent, plot_suggestor,plot_suggestor_critic, plot_generator, visualization_report_agent],
+    tasks=[reader_task, preprocessing_code_task, plot_suggestor_task, plot_suggestor_critic_task, plot_generator_task, visualization_report_task],
     verbose=True
 )
 
 # The folder name is provided as input instead of specific file path
 # Files will be discovered within this folder
-folder_name = "u1314-14afsl141-smasdads-12234"  # This can be replaced with user input
+folder_name = "1kjbjkb923-13813kbds"  # This can be replaced with user input
 results = master_crew.kickoff(inputs={"folder_path": folder_name, "user_input": ""})
 print(results)

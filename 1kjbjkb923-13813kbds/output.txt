@@ -1,0 +1,80 @@
+## E-commerce Behavior Analysis Report
+
+**Executive Summary:** This report analyzes customer behavior data from an e-commerce platform, exploring various aspects such as customer demographics, purchase patterns, and the impact of different factors on customer behavior. The analysis aims to identify key trends, provide actionable insights, and suggest recommendations for improving business performance.
+
+**1. Customer Demographics and Distribution**
+
+*   **Age Distribution:** The customer base has an even age distribution between the ages of 18 and 52, with potentially slight peaks. 
+
+    *   *Actionable Insight:* Target marketing campaigns for the varying age groups.
+
+*   **Gender Distribution:** (Unable to Analyze)
+
+    *   *Actionable Insight:* (Unable to Analyze)
+
+*   **Income Level Distribution:**
+    *   The customer base has a distribution of "High" and "Middle" income levels.
+
+    *   *Actionable Insight:* Identify which income level spends more on products or services.
+
+**2. Purchase Behavior and Patterns**
+
+*   **Purchase Category Distribution:** The "Electronics" category is the most popular, followed by "Sports & Outdoors", "Jewelry & Accessories", and "Home Appliances". The least popular categories are "Beauty & Personal Care", "Books", and "Travel & Leisure".
+
+    *   *Actionable Insight:* Focus marketing and inventory management on popular categories, promote less popular ones with targeted campaigns, and possibly cross-sell related products.
+
+*   **Purchase Channel Distribution:** The "Mixed" purchase channel has the highest count, followed by "Online" and "In-Store" purchase channels.
+
+    *   *Actionable Insight:* Maintain a strong presence across all purchase channels, as customers utilize all options.
+    *   *Actionable Insight:* Improve channel performance by optimizing online and in-store experiences.
+
+*   **Research vs. Frequency:** No relationship between Time spent on Product Research and Purchase Frequency.
+    *   *Actionable Insight:* There is no correlation between time spent on product research and the amount purchased. Further analysis can reveal if other information correlates with customer's frequency of purchase.
+
+**3. Influence of Factors on Purchases**
+
+*   **Discount Usage vs. Purchase Intent:** Discounts seem to slightly influence the purchase intention.
+
+    *   *Actionable Insight:* Run marketing promotions on "Impulsive" or "Wants-based" purchase categories.
+
+*   **Customer Loyalty vs. Channel:** The distribution of purchase channels (In-Store, Mixed, Online) is very similar for both loyalty program members (True) and non-members (False).
+    *   *Actionable Insight:* Channel preference is driven by other factors in the dataset rather than just the loyalty program.       
+
+*   **Product Rating vs. Customer Satisfaction:** There is no clear, strong correlation between product rating and customer satisfaction.
+
+    *   *Actionable Insight:* Further analysis can reveal more information about the data.
+
+*   **Income Level vs Purchase Amount:** The average purchase amount for customers with a "Middle" income level appears to be slightly higher than that of customers with a "High" income level.
+
+    *   *Actionable Insight:* Target marketing campaigns based on income level to improve purchase amount.
+
+*   **Purchase Frequency Trend by Time of Purchase:** No visible plot.
+
+    *   *Actionable Insight:* No data available.
+
+*   **Return Rate vs Purchase Category:** The "Travel & Leisure (Flights)" category has the highest return rate.
+
+    *   *Actionable Insight:* Identify potential issues with flight bookings.
+    *   *Actionable Insight:* Examine the return rate of categories such as "Health Care"
+
+**4. Additional Analysis and Recommendations**
+
+*   **Correlation Matrix:** (Unable to Analyze)
+*   **Time to Decision vs. Income Level:** (Unable to Analyze)
+*   **Purchase Amount Distribution by Customer Segment (Income Level):** The average purchase amount for customers with a "Middle" income level appears to be slightly higher than that of customers with a "High" income level.
+
+    *   *Actionable Insight:* Understand the reason why "Middle" income level customers spend more than "High" income level customers. 
+
+*   **Customer Satisfaction by Purchase Channel:** Highest average satisfaction: "Online". Lowest average satisfaction: "In-Store".    
+
+    *   *Actionable Insight:* Identify issues and optimize "In-Store" purchases.
+
+**5. Further Exploration**
+
+*   **Analyze the relationships between purchase categories, income levels, and customer demographics.** This analysis can reveal customer segments.
+*   **Investigate the reasons behind the return rates for high-return categories, such as "Travel & Leisure (Flights).**
+*   **Explore other variables in the dataset, such as customer behavior.**
+
+**6. Conclusion**
+
+This analysis provides a starting point for understanding customer behavior on the e-commerce platform. Further analysis is recommended to dive deeper and achieve better performance.
