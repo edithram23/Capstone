@@ -160,6 +160,59 @@ def code_executor(code):
         except Exception as e:
             print(e)
             return f"Error : {str(e)}"
+
+def plot_code_executor(code):
+        def beautify_code(file_path):
+            """Formats the Python file using black."""
+            try:
+                subprocess.run(["black", file_path], check=True)
+                print(f"✅ Code formatted successfully: {file_path}")
+            # except subprocess.CalledProcessError:
+            #     print(f"❌ Failed to format {file_path}. Ensure 'black' is installed.")
+            except Exception as e:
+                print(f"❌ Error: {e}")
+
+        def lint_code(file_path):
+            """Runs pylint to check for errors in the Python file."""
+            try:
+                lint_result = subprocess.run(["pylint", file_path], capture_output=True, text=True)
+                print(f"🔍 Pylint Output:\n{lint_result.stdout}")
+            except Exception as e:
+                print(f"❌ Error running pylint: {e}")
+        
+        try:
+            code = str(code)
+            file_name = 'plot_code.py'
+            code_file = code.split('```python')[1].split('```')[0]
+            # print(code_file)
+            code_block = code_file.encode('utf-8-sig').decode('utf-8-sig')
+
+            code_lines = code_block.splitlines()
+            cleaned_code = '\n'.join(line.rstrip() for line in code_lines)
+
+            with open(file_name, "w", encoding='utf-8') as script_file:
+                script_file.write(cleaned_code)
+        
+            print("\n🔹 Beautifying the code...\n")
+            beautify_code(file_name)
+
+            print("\n🔹 Running code analysis...\n")
+            lint_code(file_name)
+            
+            result = subprocess.run(
+                [sys.executable, file_name],
+                capture_output=True,
+                text=True,
+                check=True  # Raises an exception if the script returns a non-zero exit code
+            )
+            time.sleep(10)
+            print(f"Execution Result {result.stdout}")
+        except subprocess.CalledProcessError as e:
+                print("Subprocess error:", e.stderr)
+                return f"Error while executing the script: {e.stderr}"
+        except Exception as e:
+            print(e)
+            return f"Error : {str(e)}"
         
         
 class Folder_File_Getter(BaseTool):
